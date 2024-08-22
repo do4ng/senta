@@ -5,7 +5,10 @@ import { Context } from './context';
 import type { Asyncable, Nullable } from '../types';
 import { SentaResponse } from './response';
 
-export type Middleware = (context: Context, next: () => void) => Asyncable<void>;
+export type Middleware = (
+  context: Context,
+  next: () => void
+) => Asyncable<void | SentaResponse>;
 
 /**
  * + `Response`
@@ -111,7 +114,12 @@ class App {
         const middleware = middlewares[(index += 1)]; // next middleware
 
         if (middleware) {
-          await middleware(context, loop);
+          const output = await middleware(context, loop);
+
+          if (output instanceof SentaResponse) {
+            context.headers(output.headers);
+            context.send(output.format());
+          }
         }
       }
     };
